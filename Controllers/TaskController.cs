@@ -28,26 +28,33 @@ namespace TaskApi.Controllers
             return task;
         }
         [HttpPost]
-        public async Task<ActionResult<TaskItem>> CreateTask(TaskItem taskItem)
+        public async Task<ActionResult<TaskItem>> CreateTask(TaskItemDto taskDto)
         {
-            _context.TaskItems.Add(taskItem);
+            var task = new TaskItem
+            {
+                Title = taskDto.Title,
+                Description = taskDto.Description,
+                DueDate = taskDto.DueDate,
+                IsComplete = taskDto.IsComplete
+            };
+
+            _context.TaskItems.Add(task);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetTask), new { id = taskItem.Id }, taskItem);
+            return CreatedAtAction(nameof(GetTask), new { id = task.Id }, task);
         }
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTask(int id, TaskItem taskItem)
+        public async Task<IActionResult> UpdateTask(int id, TaskItemDto taskDto)
         {
-            if (id != taskItem.Id) return BadRequest();
-            _context.Entry(taskItem).State = EntityState.Modified;
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.TaskItems.Any(e => e.Id == id)) return NotFound();
-                throw;
-            }
+            var task = await _context.TaskItems.FindAsync(id);
+            if (task == null) return NotFound();
+
+            // Only update modifiable fields
+            task.Title = taskDto.Title;
+            task.Description = taskDto.Description;
+            task.DueDate = taskDto.DueDate;
+            task.IsComplete = taskDto.IsComplete;
+
+            await _context.SaveChangesAsync();
             return NoContent();
         }
         [HttpDelete("{id}")]
