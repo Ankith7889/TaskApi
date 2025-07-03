@@ -22,11 +22,20 @@ namespace TaskApi.Controllers
             return tasks.Select(MapToDto).ToList();
         }
 
+       
         [HttpGet("{id}")]
-        public async Task<ActionResult<TaskItemDto>> GetTask(int id)
+        public async Task<ActionResult<TaskItemDto>> GetTask(int id, [FromQuery] bool? isComplete)
         {
             var task = await _context.TaskItems.FindAsync(id);
-            if (task == null) return NotFound();
+            if (task == null)
+                return NotFound();
+
+            if (isComplete.HasValue && isComplete.Value)
+            {
+                if (!task.IsComplete)
+                    return NotFound();
+            }
+
             return MapToDto(task);
         }
         [HttpPost]
