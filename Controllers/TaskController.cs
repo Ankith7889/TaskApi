@@ -16,16 +16,18 @@ namespace TaskApi.Controllers
             _context = context;
         }
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TaskItem>>> GetTasks()
+        public async Task<ActionResult<IEnumerable<TaskItemDto>>> GetTasks()
         {
-            return await _context.TaskItems.ToListAsync();
+            var tasks = await _context.TaskItems.ToListAsync();
+            return tasks.Select(MapToDto).ToList();
         }
+
         [HttpGet("{id}")]
-        public async Task<ActionResult<TaskItem>> GetTask(int id)
+        public async Task<ActionResult<TaskItemDto>> GetTask(int id)
         {
             var task = await _context.TaskItems.FindAsync(id);
             if (task == null) return NotFound();
-            return task;
+            return MapToDto(task);
         }
         [HttpPost]
         public async Task<ActionResult<TaskItem>> CreateTask(TaskItemDto taskDto)
@@ -66,5 +68,27 @@ namespace TaskApi.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+        private static TaskItemDto MapToDto(TaskItem task)
+        {
+            return new TaskItemDto
+            {
+                Title = task.Title,
+                Description = task.Description,
+                DueDate = task.DueDate,
+                IsComplete = task.IsComplete
+            };
+        }
+
+        private static TaskItem MapToEntity(TaskItemDto dto)
+        {
+            return new TaskItem
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                DueDate = dto.DueDate,
+                IsComplete = dto.IsComplete
+            };
+        }
+
     }
 }
